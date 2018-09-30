@@ -33,7 +33,7 @@ template vkVersionPatch*(version: untyped): untyped =
 ##  Version of this file
 
 const
-  vkHeaderVersion* = 62
+  vkHeaderVersion* = 63
   vkNullHandle* = 0
 
 type
@@ -95,6 +95,7 @@ type
     one = 1
 
   VkResult* {.pure, size: sizeof(cint).} = enum
+    errorNotPermittedExt = - 1000174001,
     errorInvalidExternalHandleKhr = - 1000072003,
     errorOutOfPoolMemoryKhr = - 1000069000,
     errorInvalidShaderNv = - 1000012000,
@@ -323,6 +324,7 @@ type
     bindImageMemoryInfoKhr = 1000157001,
     validationCacheCreateInfoExt = 1000160000,
     shaderModuleValidationCacheCreateInfoExt = 1000160001,
+    DeviceQueueGlobalPriorityCreateInfoExt = 1000174000, 
 
   VkSystemAllocationScope* {.pure, size: sizeof(cint).} = enum
     command = 0,
@@ -4957,7 +4959,7 @@ const
   vKEXTValidationCache* = 1
 
 type
-    VkValidationCacheEXT* = VkNonDispatchableHandle
+  VkValidationCacheEXT* = VkNonDispatchableHandle
 
 const
   vkExtValidationCacheSpecVersion* = 1
@@ -4993,6 +4995,26 @@ when not defined(VK_NO_PROTOTYPES):
   proc vkGetValidationCacheDataEXT*(device: VkDevice; validationCache: VkValidationCacheEXT; pDataSize: ptr csize; pData: pointer): VkResult {.cdecl, importc.}
 
 const
-  vKEXTShaderViewportIndexLayer* = 1
+  vkEXTShaderViewportIndexLayer* = 1
   vkExtShaderViewportIndexLayerSpecVersion* = 1
   vkExtShaderViewportIndexLayerExtensionName* = "VK_EXT_shader_viewport_index_layer"
+  vkEXTGlobalPriority* = 1
+  vkEXTGlobalPrioritySpecVersion* = 1
+  vkEXTGlobalPriorityExtensionName* = "VK_EXT_global_priority"
+
+type
+  VkQueueGlobalPriorityEXT* {.pure, size: sizeof(cint).} = enum
+    low = 128,
+    medium = 256,
+    high = 512,
+    realtime = 1024,
+    #Commented out, since Nim doesn't support duplicate values in enums
+    #beginRangeEXT = VkQueueGlobalPriorityEXT.low,
+    #endRangeEXT = VkQueueGlobalPriorityEXT.realtime,
+    #rangeSizeEXT = (VkQueueGlobalPriorityEXT.realtime - VkQueueGlobalPriorityEXT.low + 1),
+    maxEnumEXT = 0x7FFFFFFF,
+    
+  VkDeviceQueueGlobalPriorityCreateInfoEXT* = object
+    sType*: VkStructureType
+    pNext*: pointer
+    globalPriority*: VkQueueGlobalPriorityEXT
