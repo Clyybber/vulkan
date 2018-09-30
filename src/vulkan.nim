@@ -33,7 +33,7 @@ template vkVersionPatch*(version: untyped): untyped =
 ##  Version of this file
 
 const
-  vkHeaderVersion* = 61
+  vkHeaderVersion* = 62
   vkNullHandle* = 0
 
 type
@@ -3974,6 +3974,9 @@ const
   vKAMDTextureGatherBiasLod* = 1
   vkAmdTextureGatherBiasLodSpecVersion* = 1
   vkAmdTextureGatherBiasLodExtensionName* = "VK_AMD_texture_gather_bias_lod"
+  vkAmdShaderImageLoadStoreLod* = 1
+  vkAmdShaderImageLoadStoreLodSpecVersion* = 1
+  vkAmdShaderImageLoadStoreLodExtensionName* = "VK_AMD_shader_image_load_store_lod"
 
 type
   VkTextureLODGatherFormatPropertiesAMD* = object
@@ -4845,7 +4848,7 @@ type
     attachmentInitialSampleLocationsCount*: uint32
     pAttachmentInitialSampleLocations*: ptr VkAttachmentSampleLocationsEXT
     postSubpassSampleLocationsCount*: uint32
-    pSubpassSampleLocations*: ptr VkSubpassSampleLocationsEXT
+    pPostSubpassSampleLocations*: ptr VkSubpassSampleLocationsEXT
 
   VkPipelineSampleLocationsStateCreateInfoEXT* = object
     sType*: VkStructureType
