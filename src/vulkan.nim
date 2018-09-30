@@ -33,7 +33,7 @@ template vkVersionPatch*(version: untyped): untyped =
 ##  Version of this file
 
 const
-  vkHeaderVersion* = 63
+  vkHeaderVersion* = 64
   vkNullHandle* = 0
 
 type
@@ -324,7 +324,7 @@ type
     bindImageMemoryInfoKhr = 1000157001,
     validationCacheCreateInfoExt = 1000160000,
     shaderModuleValidationCacheCreateInfoExt = 1000160001,
-    DeviceQueueGlobalPriorityCreateInfoExt = 1000174000, 
+    deviceQueueGlobalPriorityCreateInfoExt = 1000174000, 
 
   VkSystemAllocationScope* {.pure, size: sizeof(cint).} = enum
     command = 0,
@@ -3785,7 +3785,7 @@ type
     VkDebugReportCallbackEXT* = VkNonDispatchableHandle
 
 const
-  vkExtDebugReportSpecVersion* = 8
+  vkExtDebugReportSpecVersion* = 9
   vkExtDebugReportExtensionName* = "VK_EXT_debug_report"
 
 type
@@ -3979,6 +3979,42 @@ const
   vkAmdShaderImageLoadStoreLod* = 1
   vkAmdShaderImageLoadStoreLodSpecVersion* = 1
   vkAmdShaderImageLoadStoreLodExtensionName* = "VK_AMD_shader_image_load_store_lod"
+  vkAmdShaderInfo* = 1
+  vkAmdShaderInfoSpecVersion* = 1
+  vkAmdShaderInfoExtensionName* = "VK_AMD_shader_info"
+
+type
+  VkShaderInfoTypeAMD* {.pure, size: sizeof(cint).} = enum
+    statistics = 0,
+    binary = 1,
+    disassembly = 2,
+    #Commented out, because Nim doesn't support duplicate values in enums
+    #beginRange = VkShaderInfoTypeAMD.statistics,
+    #endRange = VkShaderInfoTypeAMD.disassembly,
+    #rangeSize = (VkShaderInfoTypeAMD.disassembly - VkShaderInfoTypeAMD.statistics + 1),
+    maxEnum = 0x7FFFFFFF,
+
+  VkShaderResourceUsageAMD* = object
+    numUsedVgprs*: uint32
+    numUsedSgprs*: uint32
+    ldsSizePerLocalWorkGroup*: uint32
+    ldsUsageSizeInBytes*: csize
+    scratchMemUsageInBytes*: csize
+
+  VkShaderStatisticsInfoAMD* = object
+    shaderStageMask*: VkShaderStageFlags
+    resourceUsage*: VkShaderResourceUsageAMD
+    numPhysicalVgprs*: uint32
+    numPhysicalSgprs*: uint32
+    numAvailableVgprs*: uint32
+    numAvailableSgprs*: uint32
+    computeWorkGroupSize3*: uint32 #Renamed, because Nim doesn't allow "computeWorkGroupSize[3]"
+
+  PFN_vkGetShaderInfoAMD* = proc (device: VkDevice, pipeline: VkPipeline, shaderStage: VkShaderStageFlagBits, infoType: VkShaderInfoTypeAMD, pInfoSize:  ptr csize, pInfo: pointer): VkResult {.cdecl.}
+
+when not defined(VK_NO_PROTOTYPES):
+  proc vkGetShaderInfoAMD*(device: VkDevice, pipeline: VkPipeline, shaderStage: VkShaderStageFlagBits, infoType: VkShaderInfoTypeAMD, pInfoSize:  ptr csize, pInfo: pointer): VkResult {.cdecl, importc.}
+
 
 type
   VkTextureLODGatherFormatPropertiesAMD* = object
@@ -3988,7 +4024,7 @@ type
 
 
 const
-  vKKHXMultiview* = 1
+  vkKHXMultiview* = 1
   vkKhxMultiviewSpecVersion* = 1
   vkKhxMultiviewExtensionName* = "VK_KHX_multiview"
 
