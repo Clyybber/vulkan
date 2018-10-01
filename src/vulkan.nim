@@ -33,7 +33,7 @@ template vkVersionPatch*(version: untyped): untyped =
 ##  Version of this file
 
 const
-  vkHeaderVersion* = 64
+  vkHeaderVersion* = 65
   vkNullHandle* = 0
 
 type
