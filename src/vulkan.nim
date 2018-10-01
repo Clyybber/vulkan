@@ -33,7 +33,7 @@ template vkVersionPatch*(version: untyped): untyped =
 ##  Version of this file
 
 const
-  vkHeaderVersion* = 61
+  vkHeaderVersion* = 66
   vkNullHandle* = 0
 
 type
@@ -95,6 +95,7 @@ type
     one = 1
 
   VkResult* {.pure, size: sizeof(cint).} = enum
+    errorNotPermittedExt = - 1000174001,
     errorInvalidExternalHandleKhr = - 1000072003,
     errorOutOfPoolMemoryKhr = - 1000069000,
     errorInvalidShaderNv = - 1000012000,
@@ -323,6 +324,10 @@ type
     bindImageMemoryInfoKhr = 1000157001,
     validationCacheCreateInfoExt = 1000160000,
     shaderModuleValidationCacheCreateInfoExt = 1000160001,
+    deviceQueueGlobalPriorityCreateInfoExt = 1000174000,
+    importMemoryHostPointerInfoExt = 1000178000,
+    memoryHostPointerPropertiesExt = 1000178001,
+    physicalDeviceExternalMemoryHostPropertiesExt = 1000178002,
 
   VkSystemAllocationScope* {.pure, size: sizeof(cint).} = enum
     command = 0,
@@ -2995,6 +3000,9 @@ type
     d3d11TextureKmt = 0x00000010,
     d3d12Heap = 0x00000020,
     d3d12Resource = 0x00000040,
+    dmaBufExt = 0x00000200,
+    hostAllocationExt = 0x00000080,
+    hostMappedForeignMemoryExt = 0x00000100,
 
   VkExternalMemoryHandleTypeFlagsKHR* = VkFlags
 
@@ -3783,7 +3791,7 @@ type
     VkDebugReportCallbackEXT* = VkNonDispatchableHandle
 
 const
-  vkExtDebugReportSpecVersion* = 8
+  vkExtDebugReportSpecVersion* = 9
   vkExtDebugReportExtensionName* = "VK_EXT_debug_report"
 
 type
@@ -3974,6 +3982,45 @@ const
   vKAMDTextureGatherBiasLod* = 1
   vkAmdTextureGatherBiasLodSpecVersion* = 1
   vkAmdTextureGatherBiasLodExtensionName* = "VK_AMD_texture_gather_bias_lod"
+  vkAmdShaderImageLoadStoreLod* = 1
+  vkAmdShaderImageLoadStoreLodSpecVersion* = 1
+  vkAmdShaderImageLoadStoreLodExtensionName* = "VK_AMD_shader_image_load_store_lod"
+  vkAmdShaderInfo* = 1
+  vkAmdShaderInfoSpecVersion* = 1
+  vkAmdShaderInfoExtensionName* = "VK_AMD_shader_info"
+
+type
+  VkShaderInfoTypeAMD* {.pure, size: sizeof(cint).} = enum
+    statistics = 0,
+    binary = 1,
+    disassembly = 2,
+    #Commented out, because Nim doesn't support duplicate values in enums
+    #beginRange = VkShaderInfoTypeAMD.statistics,
+    #endRange = VkShaderInfoTypeAMD.disassembly,
+    #rangeSize = (VkShaderInfoTypeAMD.disassembly - VkShaderInfoTypeAMD.statistics + 1),
+    maxEnum = 0x7FFFFFFF,
+
+  VkShaderResourceUsageAMD* = object
+    numUsedVgprs*: uint32
+    numUsedSgprs*: uint32
+    ldsSizePerLocalWorkGroup*: uint32
+    ldsUsageSizeInBytes*: csize
+    scratchMemUsageInBytes*: csize
+
+  VkShaderStatisticsInfoAMD* = object
+    shaderStageMask*: VkShaderStageFlags
+    resourceUsage*: VkShaderResourceUsageAMD
+    numPhysicalVgprs*: uint32
+    numPhysicalSgprs*: uint32
+    numAvailableVgprs*: uint32
+    numAvailableSgprs*: uint32
+    computeWorkGroupSize3*: uint32 #Renamed, because Nim doesn't allow "computeWorkGroupSize[3]"
+
+  PFN_vkGetShaderInfoAMD* = proc (device: VkDevice, pipeline: VkPipeline, shaderStage: VkShaderStageFlagBits, infoType: VkShaderInfoTypeAMD, pInfoSize:  ptr csize, pInfo: pointer): VkResult {.cdecl.}
+
+when not defined(VK_NO_PROTOTYPES):
+  proc vkGetShaderInfoAMD*(device: VkDevice, pipeline: VkPipeline, shaderStage: VkShaderStageFlagBits, infoType: VkShaderInfoTypeAMD, pInfoSize:  ptr csize, pInfo: pointer): VkResult {.cdecl, importc.}
+
 
 type
   VkTextureLODGatherFormatPropertiesAMD* = object
@@ -3983,7 +4030,7 @@ type
 
 
 const
-  vKKHXMultiview* = 1
+  vkKHXMultiview* = 1
   vkKhxMultiviewSpecVersion* = 1
   vkKhxMultiviewExtensionName* = "VK_KHX_multiview"
 
@@ -4780,7 +4827,14 @@ when defined(VK_USE_PLATFORM_MACOS_MVK):
     proc vkCreateMacOSSurfaceMVK*(instance: VkInstance; pCreateInfo: ptr VkMacOSSurfaceCreateInfoMVK; pAllocator: ptr VkAllocationCallbacks; pSurface: ptr VkSurfaceKHR): VkResult {.cdecl, importc.}
 
 const
-  vKEXTSamplerFilterMinmax* = 1
+  vkExtExternalMemoryDmaBuf* = 1
+  vkExtExternalMemoryDmaBufSpecVersion* = 1
+  vkExtExternalMemoryDmaBufExtensionName* = "VK_EXT_external_memory_dma_buf"
+  vkExtQueueFamilyForeign* = 1
+  vkExtQueueFamilyForeignSpecVersion* = 1
+  vkExtQueueFamilyForeignExtensionName* = "VK_EXT_queue_family_foreign"
+  vkQueueFamilyForeignExt* = (~0U-2) #?
+  vkEXTSamplerFilterMinmax* = 1
   vkExtSamplerFilterMinmaxSpecVersion* = 1
   vkExtSamplerFilterMinmaxExtensionName* = "VK_EXT_sampler_filter_minmax"
 
@@ -4845,7 +4899,7 @@ type
     attachmentInitialSampleLocationsCount*: uint32
     pAttachmentInitialSampleLocations*: ptr VkAttachmentSampleLocationsEXT
     postSubpassSampleLocationsCount*: uint32
-    pSubpassSampleLocations*: ptr VkSubpassSampleLocationsEXT
+    pPostSubpassSampleLocations*: ptr VkSubpassSampleLocationsEXT
 
   VkPipelineSampleLocationsStateCreateInfoEXT* = object
     sType*: VkStructureType
@@ -4954,7 +5008,7 @@ const
   vKEXTValidationCache* = 1
 
 type
-    VkValidationCacheEXT* = VkNonDispatchableHandle
+  VkValidationCacheEXT* = VkNonDispatchableHandle
 
 const
   vkExtValidationCacheSpecVersion* = 1
@@ -4990,6 +5044,53 @@ when not defined(VK_NO_PROTOTYPES):
   proc vkGetValidationCacheDataEXT*(device: VkDevice; validationCache: VkValidationCacheEXT; pDataSize: ptr csize; pData: pointer): VkResult {.cdecl, importc.}
 
 const
-  vKEXTShaderViewportIndexLayer* = 1
+  vkEXTShaderViewportIndexLayer* = 1
   vkExtShaderViewportIndexLayerSpecVersion* = 1
   vkExtShaderViewportIndexLayerExtensionName* = "VK_EXT_shader_viewport_index_layer"
+  vkExtGlobalPriority* = 1
+  vkExtGlobalPrioritySpecVersion* = 2
+  vkExtGlobalPriorityExtensionName* = "VK_EXT_global_priority"
+
+type
+  VkQueueGlobalPriorityEXT* {.pure, size: sizeof(cint).} = enum
+    low = 128,
+    medium = 256,
+    high = 512,
+    realtime = 1024,
+    #Commented out, since Nim doesn't support duplicate values in enums
+    #beginRange = VkQueueGlobalPriorityEXT.low,
+    #endRange = VkQueueGlobalPriorityEXT.realtime,
+    #rangeSize = (VkQueueGlobalPriorityEXT.realtime - VkQueueGlobalPriorityEXT.low + 1),
+    maxEnum = 0x7FFFFFFF,
+    
+  VkDeviceQueueGlobalPriorityCreateInfoEXT* = object
+    sType*: VkStructureType
+    pNext*: pointer
+    globalPriority*: VkQueueGlobalPriorityEXT
+
+const
+  vkExtExternalMemoryHost* = 1
+  vkExtExternalMemoryHostSpecVersion* = 1
+  vkExtExternalMemoryHostExtensionName* = "VK_EXT_external_memory_host"
+
+type
+  VkImportMemoryHostPointerInfoEXT* = object
+    sType*: VkStructureType
+    pNext*: pointer
+    handleType*: VkExternalMemoryHandleTypeFlagBitsKHR
+    pHostPointer*: pointer
+
+  VkMemoryHostPointerPropertiesEXT* = object
+    sType*: VkStructureType
+    pNext*: pointer
+    memoryTypeBits*: uint32
+
+  VkPhysicalDeviceExternalMemoryHostPropertiesEXT* = object
+    sType*: VkStructureType
+    pNext*: pointer
+    minImportedHostPointerAlignment*: VkDeviceSize
+
+  PFN_vkGetMemoryHostPointerPropertiesEXT* = proc (device: VkDevice, handleType: VkExternalMemoryHandleTypeFlagBitsKHR, pHostPointer: pointer, pMemoryHostPointerProperties: ptr VkMemoryHostPointerPropertiesEXT): VkResult {.cdecl.}
+
+when not defined(VK_NO_PROTOTYPES):
+  proc vkGetMemoryHostPointerPropertiesEXT*(device: VkDevice, handleType: VkExternalMemoryHandleTypeFlagBitsKHR, pHostPointer: pointer, pMemoryHostPointerProperties: ptr VkMemoryHostPointerPropertiesEXT): VkResult {.cdecl, importc.}
